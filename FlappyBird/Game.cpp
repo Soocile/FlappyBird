@@ -220,6 +220,7 @@ void Game::processEvents() {
 
         
         if (m_gamestate == GAME_OVER) {
+            m_score = 0;
             // New Game hover
             if (m_newGameText.getGlobalBounds().contains(mouseWorldPos)) {
                 m_newGameText.setFillColor(sf::Color::Yellow); // shimmering effect
@@ -275,7 +276,7 @@ void Game::update() {
 
 
         }
-       
+
 
         //pipe update
         for (size_t i = 0; i < m_pipes.size(); ++i) {
@@ -295,7 +296,7 @@ void Game::update() {
 
                 m_pipes.push_back(Pipe(m_window.getSize().x, m_pipe_texture));
 
-               
+
             }
 
             //delete the old pipe
@@ -303,13 +304,13 @@ void Game::update() {
 
                 m_pipes.erase(m_pipes.begin());
             }
-           
 
-           
+
+
 
         }
 
-       
+
         scoreText.setString("Score: " + std::to_string(m_score));
 
     }
@@ -320,20 +321,20 @@ void Game::render() {
 
     m_window.clear(sf::Color::Black);
     m_window.draw(m_background);
-    
+
     for (size_t i = 0; i < m_pipes.size(); ++i) {
 
         m_pipes[i].render(m_window);
     }
 
- 
+
 
     if (m_gamestate == RUNNING) {
 
         m_gamestate = check_collision();
         m_window.draw(m_bird);
         m_window.draw(scoreText);
-      
+
     }
 
     else if (m_gamestate == GAME_OVER) {
@@ -346,11 +347,11 @@ void Game::render() {
 
     }
     else if (m_gamestate == START_SCREEN) {
-        
+
         m_window.draw(m_background);
         m_window.draw(m_messageSprite);
         m_window.draw(m_bird);//leave the bird stable
-        
+
         m_window.display();
         return; // do not draw anything else
     }
@@ -374,6 +375,15 @@ GameState Game::check_collision() {
 
     sf::FloatRect birdBounds = m_bird.getGlobalBounds();
 
+    if (birdBounds.top + birdBounds.height >= m_window.getSize().y){
+
+        if (m_dieSound.getStatus() != sf::Sound::Playing)
+        {
+            m_dieSound.play();
+            return get_game_state_over();
+        }
+        return get_game_state_running();
+    }
 
     for (size_t i = 0; i < m_pipes.size(); i++) {
 
