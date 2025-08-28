@@ -37,7 +37,6 @@ This project is actively evolving. Planned features include:
 - 🔊 Sound and visual effects  
 - 🌐 Network-based high score sharing  
 - 🧠 Difficulty scaling based on score  
-- 📱 Mobile-friendly input abstraction  
 
 ---
 
