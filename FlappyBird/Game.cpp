@@ -5,11 +5,7 @@
 #include<vector>
 
 
-Game::Game() {
-
-
-    
-    
+Game::Game() : bird("") {
 
     //***SOUNDS***
 
@@ -39,42 +35,35 @@ Game::Game() {
 
 
 	m_background.setTexture(m_backgroundTexture);
+    m_background2.setTexture(m_backgroundTexture);
 
     //scale the background with the window size
-
-
+   
     float scale_x = (float)m_window.getSize().x / m_background.getLocalBounds().width;
     float scale_y = (float)m_window.getSize().y / m_background.getLocalBounds().height;
 
     m_background.setScale(scale_x, scale_y);
+    m_background2.setScale(scale_x, scale_y);
+
+ 
+    bgWidth = m_background.getGlobalBounds().width;
+    m_background.setPosition(0, 0);
+    m_background2.setPosition(bgWidth, 0);
+    m_background.setTexture(m_backgroundTexture);
+    m_background2.setTexture(m_backgroundTexture);
+  
+
+    
 
     if (!m_pipe_texture.loadFromFile("assets/Sprites/pipe-green.png")) {
 
         std::cerr << "pipe.png could not be loaded" << std::endl;
     }
 
+    bird.load_frames("blue");
+  
+    
 
-    if (!m_redBirdDownTexture.loadFromFile("assets/Sprites/redbird-downflap.png")) {
-
-        std::cerr << "redbird-downflap.png could not be loaded" << std::endl;
-    }
-    if (!m_redBirdMidTexture.loadFromFile("assets/Sprites/redbird-midflap.png")) {
-
-        std::cerr << "redbird-midflap.png could not be loaded" << std::endl;
-    }
-    if (!m_redBirdUpTexture.loadFromFile("assets/Sprites/redbird-upflap.png")) {
-
-        std::cerr << "redbird-upflap.png could not be loaded" << std::endl;
-    }
-
-
-    m_bird.setTexture(m_redBirdMidTexture);
-
-    m_bird.setScale(1.5f, 1.5f);
-
-    m_bird.setPosition(300.0f, 250.0f);
-
-    m_birdAnimationState = 0;
 
     m_pipes.push_back(Pipe(m_window.getSize().x, m_pipe_texture));
 
@@ -141,7 +130,27 @@ Game::Game() {
     scoreText.setFillColor(sf::Color::White);
     scoreText.setString("Score: " + std::to_string(m_score));
     scoreText.setPosition(20.f, 20.f);
+
+
+
+    //best_score
+
+    best_score_text.setFont(m_font);
+    best_score_text.setCharacterSize(32);
+    best_score_text.setFillColor(sf::Color::Yellow);
+    best_score_text.setString("Best Score : ");
+    best_score_text.setPosition(15.f,50.f);
+
+
 }
+
+
+
+
+//*************************
+
+
+
 
 void Game::run() {
 
@@ -156,11 +165,9 @@ void Game::run() {
 
 void Game::Restart_Game() {
 
-    m_bird.setPosition(300.0f, 250.0f);
+    bird.update(0.0f);
 
-    m_birdvelocityY = 0.0f;
-    m_bird.setTexture(m_redBirdMidTexture);
-    m_birdAnimationState = 0;
+    bird.set_position(300.0f, 250.0f);
     m_pipes.clear();
     m_pipes.push_back(Pipe(m_window.getSize().x, m_pipe_texture));
 
@@ -188,8 +195,10 @@ void Game::processEvents() {
                 }
                 else if (m_gamestate == RUNNING) {
 
-                    m_birdvelocityY = -4.0f;
-                    m_birdAnimationState = 1; //start animation by raising the wings
+                  
+
+                    bird.move_object(4.0f);
+                    
                     m_wingSound.play();
                     m_animationclock.restart();
 
@@ -220,6 +229,11 @@ void Game::processEvents() {
 
         
         if (m_gamestate == GAME_OVER) {
+            if (m_score > best_score) {
+
+                best_score = m_score;
+                best_score_text.setString("Best Score : " + std::to_string(m_score));
+            }
             m_score = 0;
             // New Game hover
             if (m_newGameText.getGlobalBounds().contains(mouseWorldPos)) {
@@ -249,33 +263,20 @@ void Game::update() {
     }
     else {
 
+      
 
-        m_birdvelocityY += 0.1f;
-        m_bird.move(0.0f, m_birdvelocityY);
+        m_background.move(-m_backgroundspeed, 0);
+        m_background2.move(-m_backgroundspeed, 0);
 
-        if (m_birdvelocityY < 0) {//if bird goes up
+        // if a background completely leaves from the left side, take it to the right side
 
-            if (m_animationclock.getElapsedTime().asMilliseconds() > ANIMATION_FRAME_DURATION_MS) {
+        if (m_background.getPosition().x <= -bgWidth)
+            m_background.setPosition(m_background2.getPosition().x + bgWidth, 0);
+       
+        if (m_background2.getPosition().x <= -bgWidth)//****************************************************************************************************************************************
+            m_background2.setPosition(m_background.getPosition().x + bgWidth, 0);
 
-                if (m_birdAnimationState == 1) {
-                    m_bird.setTexture(m_redBirdUpTexture);
-                    m_birdAnimationState = 2;
-                }
-                else if (m_birdAnimationState == 2) {
-                    m_bird.setTexture(m_redBirdMidTexture);
-                    m_birdAnimationState = 1;
-
-                }
-                m_animationclock.restart();
-            }
-            else { //if bird goes down
-
-                m_bird.setTexture(m_redBirdDownTexture);
-
-            }
-
-
-        }
+        bird.update(0.12f);
 
 
         //pipe update
@@ -292,7 +293,7 @@ void Game::update() {
             }
 
             //create a new pipe
-            if (m_pipes.back().getRightx() < m_window.getSize().x - 350.0f) {
+            if (m_pipes.back().getRightx() < m_window.getSize().x - 550.0f) {
 
                 m_pipes.push_back(Pipe(m_window.getSize().x, m_pipe_texture));
 
@@ -321,6 +322,7 @@ void Game::render() {
 
     m_window.clear(sf::Color::Black);
     m_window.draw(m_background);
+    m_window.draw(m_background2);
 
     for (size_t i = 0; i < m_pipes.size(); ++i) {
 
@@ -332,17 +334,21 @@ void Game::render() {
     if (m_gamestate == RUNNING) {
 
         m_gamestate = check_collision();
-        m_window.draw(m_bird);
+      
+        bird.render(m_window);
         m_window.draw(scoreText);
+        m_window.draw(best_score_text);
 
     }
 
     else if (m_gamestate == GAME_OVER) {
 
-        m_window.draw(m_bird);
+      
+        bird.render(m_window);
         m_window.draw(m_gameOverSprite); // Game Over görselini çiz
         m_window.draw(m_newGameText);
         m_window.draw(scoreText);
+        m_window.draw(best_score_text);
         m_window.draw(m_quitText);
 
     }
@@ -350,7 +356,8 @@ void Game::render() {
 
         m_window.draw(m_background);
         m_window.draw(m_messageSprite);
-        m_window.draw(m_bird);//leave the bird stable
+        m_window.draw(best_score_text);
+        bird.render(m_window);
 
         m_window.display();
         return; // do not draw anything else
@@ -373,7 +380,9 @@ GameState get_game_state_start_screen() {
 }
 GameState Game::check_collision() {
 
-    sf::FloatRect birdBounds = m_bird.getGlobalBounds();
+ 
+
+    sf::FloatRect birdBounds = bird.get_global_bounds();
 
     if (birdBounds.top + birdBounds.height >= m_window.getSize().y){
 

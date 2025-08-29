@@ -6,6 +6,7 @@
 #include<iostream>
 #include<vector>
 #include"Pipe.hpp"
+#include"BirdAnimation.hpp"
 
 
 #ifndef Game_HPP
@@ -41,6 +42,15 @@ public:
 
 private:
 
+
+	sf::Text best_score_text;
+
+	int best_score = 0;
+
+	BirdAnimation bird;
+
+	float bgWidth;
+
 	void processEvents();
 
 	void update();
@@ -60,6 +70,8 @@ private:
 
 	sf::Texture m_backgroundTexture;
 	sf::Sprite m_background;
+	sf::Sprite m_background2;
+	float m_backgroundspeed = 2.0f;
 
 	sf::Texture m_redBirdDownTexture;
 	sf::Texture m_redBirdMidTexture;
